@@ -51,5 +51,9 @@ Checks whether a directory exists
 
 Checks whether a file exists
 
+### Http
+
+Checks whether an http(s) endpoint is available, by sending a HEAD-Request
+
 
 
