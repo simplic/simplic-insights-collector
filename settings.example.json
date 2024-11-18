@@ -1,0 +1,33 @@
+{
+    "$schema": "./schemas/settings.schema.json",
+    "host": "<name>",
+    "url": "<url>",
+    "token": "<access token>",
+    "upload": {
+        "min_interval": "10s",
+        "max_interval": "5m",
+        "max_backlog": 50
+    },
+    "sensors": [
+        {
+            "type": "hardware:cpu",
+            "name": "CPU Usage",
+            "interval": "2s",
+            "settings": {
+                "unhealthy": "percent > 80",
+                "degraded": "percent > 70",
+                "extra": false
+            }
+        },
+        {
+            "type": "hardware:ram",
+            "name": "RAM Usage",
+            "interval": "2s",
+            "settings": {
+                "unhealthy": "mem.percent > 80",
+                "degraded": "mem.percent > 70",
+                "extra": false
+            }
+        }
+    ]
+}

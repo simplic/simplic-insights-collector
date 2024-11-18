@@ -1,0 +1,87 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://simplic.biz/schemas/simplic-insight/settings",
+    "$defs": {
+        "interval": {
+            "type": "string",
+            "pattern": "^(\\d+h)?(\\d+m)?(\\d+s(\\d+)?)?$",
+            "examples": [
+                "10s",
+                "3h5m2s100"
+            ]
+        }
+    },
+    "type": "object",
+    "properties": {
+        "host": {
+            "type": "string",
+            "description": "Name of the sensor host/collector"
+        },
+        "url": {
+            "type": "string",
+            "description": "URL of the endpoint"
+        },
+        "token": {
+            "type": "string",
+            "description": "Access token for the API"
+        },
+        "upload": {
+            "type": "object",
+            "properties": {
+                "min_interval": {
+                    "$ref": "#/$defs/interval",
+                    "description": "Minimum interval for uploading. Data will be batched in-between"
+                },
+                "max_interval": {
+                    "$ref": "#/$defs/interval",
+                    "description": "Maximum interval for upload. This is used to send heartbeats"
+                },
+                "max_backlog": {
+                    "type": "number",
+                    "description": "Maximum number of measurements that will be stored for upload"
+                }
+            },
+            "required": [
+                "min_interval",
+                "max_interval",
+                "max_backlog"
+            ]
+        },
+        "sensors": {
+            "type": "array",
+            "description": "Sensor configurations",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "Type of the sensor"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the sensor"
+                    },
+                    "interval": {
+                        "$ref": "#/$defs/interval"
+                    },
+                    "settings": {
+                        "description": "Sensor-specific settings"
+                    }
+                },
+                "required": [
+                    "type",
+                    "name",
+                    "interval",
+                    "settings"
+                ]
+            }
+        }
+    },
+    "required": [
+        "host",
+        "url",
+        "token",
+        "upload",
+        "sensors"
+    ]
+}

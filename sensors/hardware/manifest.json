@@ -1,0 +1,10 @@
+{
+    "$schema": "../../schemas/manifest.schema.json",
+    "pkg": "hardware",
+    "version": "0.1.0",
+    "name": "Hardware",
+    "description": "Various hardware-related sensors (cpu, ram, ...)",
+    "dependencies": [
+        "psutil==6.1.*"
+    ]
+}
