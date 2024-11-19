@@ -77,7 +77,7 @@ JSON schemas for the configuration files
 
 The following section contains the available sensor types
 
-### Package `hardware`
+### Package `system`
 - CPU usage  
   - Measure CPU usage
 - RAM usage
