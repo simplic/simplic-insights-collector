@@ -79,13 +79,14 @@ The following section contains the available sensor types
 
 ### Package `system`
 - CPU usage  
-  - Measure CPU usage
+  - Get CPU usage
 - RAM usage
-  - Measure RAM and Swap usage
+  - Get RAM and Swap usage
+- Disk usage
+  - Get total and available disk usage
 
 ### Disk usage
 
-Checks available disk usage
 
 ### Package `rabbitmq`
 

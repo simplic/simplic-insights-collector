@@ -16,7 +16,6 @@ class CPUUsageSettings(SettingsBase):
         self.degraded = degraded
         self.extra = extra
 
-
 class CPUUSageSensor(SensorBase[CPUUsageSettings]):
     def __init__(self, settings: CPUUsageSettings) -> None:
         self.settings = settings
@@ -58,7 +57,6 @@ class RAMUsageSettings(SettingsBase):
         self.degraded = degraded
         self.extra = extra
 
-
 class RAMUsageSensor(SensorBase[RAMUsageSettings]):
     def __init__(self, settings: RAMUsageSettings) -> None:
         self.settings = settings
@@ -86,7 +84,49 @@ class RAMUsageSensor(SensorBase[RAMUsageSettings]):
 
 
 
+class DiskUsageSettings(SettingsBase):
+    @classmethod
+    def deserialize(cls, json: Any) -> Self:
+        json = cast('settings', json, dict)
+        path = cast('path', json['path'], str)
+        unhealthy = cast('unhealthy', json['unhealthy'], str)
+        degraded = cast('degraded', json['degraded'], str)
+        extra = cast('extra', json['extra'], bool)
+        return cls(path, unhealthy, degraded, extra)
+
+    def __init__(self, path: str, unhealthy: str, degraded: str, extra: bool) -> None:
+        self.path = path
+        self.unhealthy = unhealthy
+        self.degraded = degraded
+        self.extra = extra
+
+class DiskUsageSensor(SensorBase[DiskUsageSettings]):
+    def __init__(self, settings: DiskUsageSettings) -> None:
+        self.settings = settings
+
+    def measure(self) -> Measurement:
+        disk = psutil.disk_usage(self.settings.path)
+
+        vars = {'disk': disk}
+        xunhealthy = eval(self.settings.unhealthy, vars)
+        xdegraded = eval(self.settings.degraded, vars)
+        unhealthy = cast('unhealthy()', xunhealthy, bool)
+        warning = cast('warning()', xdegraded, bool)
+
+        data = {
+            'disk': {'total': disk.total, 'free': disk.free},
+        } if self.settings.extra else {}
+
+        if unhealthy:
+            return Measurement.now(Status.UNHEALTHY, data)
+        if warning:
+            return Measurement.now(Status.DEGRADED, data)
+        return Measurement.now(Status.HEALTHY, data)
+
+
+
 SENSORS = [
-    SensorDef('ram', RAMUsageSensor, RAMUsageSettings),
     SensorDef('cpu', CPUUSageSensor, CPUUsageSettings),
+    SensorDef('ram', RAMUsageSensor, RAMUsageSettings),
+    SensorDef('disk', DiskUsageSensor, DiskUsageSettings),
 ]
