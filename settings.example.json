@@ -10,7 +10,7 @@
     },
     "sensors": [
         {
-            "type": "hardware:cpu",
+            "type": "system:cpu",
             "name": "CPU Usage",
             "interval": "2s",
             "settings": {
@@ -20,7 +20,7 @@
             }
         },
         {
-            "type": "hardware:ram",
+            "type": "system:ram",
             "name": "RAM Usage",
             "interval": "2s",
             "settings": {
