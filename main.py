@@ -6,6 +6,7 @@ from queue import Empty, Queue
 import sys
 from threading import Event, Thread
 import time
+import traceback
 from typing import Any
 
 import requests
@@ -35,8 +36,9 @@ def measure_loop(sensor: SensorBase, index: int, queue: Queue[tuple[int, Measure
         try:
             result = sensor.measure()
         except Exception as e:
-            result = Measurement.now(Status.ERROR, error=str(e))
-    
+            trace = traceback.format_tb(e.__traceback__) if debug else None
+            result = Measurement.now(Status.ERROR, error=str(e), trace=trace)
+
         queue.put((index, result))
 
 def upload_loop(url: str, host: str, token: str, configs: list[SensorConfig], queue: Queue[tuple[int, Measurement]], min_secs: float, max_secs: float, backlog: int, stop: Event):

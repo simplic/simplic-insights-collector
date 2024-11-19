@@ -35,21 +35,25 @@ class Status(str, Enum):
 
 class Measurement:
     @classmethod
-    def now(cls, status: Status, data: Any = None, error: str | None = None) -> Self:
-        return cls(datetime.now(), status, data, error)
+    def now(cls, status: Status, data: Any = None, error: str | None = None, trace: list[str] | None = None) -> Self:
+        return cls(datetime.now(), status, data, error, trace)
 
-    def __init__(self, time: datetime, status: Status, data: Any = None, error: str | None = None) -> None:
+    def __init__(self, time: datetime, status: Status, data: Any = None, error: str | None = None, trace: list[str] | None = None) -> None:
         self.time = time
         self.status = status
         self.data = data
         self.error = error
+        self.trace = trace
 
     def toJSON(self) -> dict[str, Any]:
         return {
             'time': str(self.time),
             'status': self.status.value,
             'data': self.data,
-            'error': self.error,
+            'error': {
+                'message': self.error,
+                'trace': self.trace,
+            } if self.error else None,
         }
 
 class SettingsBase:
