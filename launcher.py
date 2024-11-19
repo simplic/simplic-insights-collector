@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import json
 import os
+import platform
 import shutil
 import subprocess
 from typing import Any, TypeVar
@@ -60,10 +61,17 @@ for pkg in pkgs:
     deps.extend(_cast('dependency', dep, str) for dep in dependencies)
 
 dir_run = './run'
-dir_venv = os.path.join(dir_run, 'venv')
-dir_core = os.path.join(dir_run, 'core')
-dir_sensors = os.path.join(dir_run, 'sensors')
-python = os.path.join(dir_venv, 'bin', 'python')
+dir_venv = './run/venv'
+dir_core = './run/core'
+dir_sensors = './run/sensors'
+
+match platform.system():
+    case 'Linux':
+        python = './run/venv/bin/python'
+    case 'Windows':
+        python = './run/venv/Scripts/python.exe'
+    case _:
+        raise RuntimeError('Unsupported OS')
 
 if not os.path.isdir(dir_run):
     os.mkdir(dir_run)
@@ -91,10 +99,20 @@ for pkg in pkgs:
     shutil.copytree(src_path, dst_path)
 
 print('Setup complete')
+
+match platform.system():
+    case 'Linux':
+        python_run = './venv/bin/python'
+    case 'Windows':
+        python_run = './run/venv/bin/python.exe'
+    case _:
+        raise RuntimeError('Unsupported OS')
+
 subprocess.run(
     (
-        './venv/bin/python', './main.py',
+        python_run, './main.py',
         os.path.abspath(args.settings),
         'debug' if args.debug else 'normal'
     ),
-    cwd=dir_run)
+    cwd=dir_run
+)
