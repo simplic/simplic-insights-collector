@@ -104,7 +104,7 @@ match platform.system():
     case 'Linux':
         python_run = './venv/bin/python'
     case 'Windows':
-        python_run = './run/venv/bin/python.exe'
+        python_run = './run/venv/Scripts/python.exe'
     case _:
         raise RuntimeError('Unsupported OS')
 
