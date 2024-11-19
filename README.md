@@ -83,13 +83,11 @@ The following section contains the available sensor types
 - RAM usage
   - Measure RAM and Swap usage
 
-Measure
-
 ### Disk usage
 
 Checks available disk usage
 
-### RabbitMQ
+### Package `rabbitmq`
 
 Checks whether a RabbitMQ server is available and accepts connections
 

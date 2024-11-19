@@ -1,6 +1,6 @@
-from typing import Any, Self
-from core import Measurement, SensorBase, SensorDef, SettingsBase, Status, Version, cast
+from core import Measurement, SensorBase, SensorDef, SettingsBase, Status, cast
 import psutil
+from typing import Any, Self
 
 class CPUUsageSettings(SettingsBase):
     @classmethod

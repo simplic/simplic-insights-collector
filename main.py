@@ -46,7 +46,6 @@ def upload_loop(url: str, host: str, token: str, configs: list[SensorConfig], qu
     print(min_secs)
     not_send = dict[int, deque[Measurement]]()
     while not stop.wait(min_secs):
-        print('checking')
         # Batch measurements
         while True:
             try:
@@ -70,7 +69,8 @@ def upload_loop(url: str, host: str, token: str, configs: list[SensorConfig], qu
         if len(sdata) > 0 or time.time() - last > max_secs:
             headers = {'Authorization': 'Bearer ' + token}
             data = {'host': host, 'sensors': sdata}
-            print('sending', json.dumps(data, indent='  '))
+            if debug:
+                print('sending', json.dumps(data, indent='  '))
             try:
                 requests.post(url, headers=headers, json=data)
                 last = time.time()
@@ -80,6 +80,7 @@ def upload_loop(url: str, host: str, token: str, configs: list[SensorConfig], qu
 
 # This should be set by launcher.py
 settings_file = sys.argv[1]
+debug = sys.argv[2] == 'debug'
 
 with open(settings_file, 'rt') as f:
     settings = json.load(f)
@@ -119,14 +120,21 @@ for pkg in pkgs:
 print('Loaded', len(sensors), 'sensor(s) from', len(pkgs), 'package(s)')
 
 print('Creating', len(configs), 'sensors')
+insts = list[SensorBase]()
+try:
+    for config in configs:
+        sensor = sensors[config.type]
+        settings = sensor.settings.deserialize(config.data)
+        insts.append(sensor.sensor(settings))
+except Exception as e:
+    print('Sensors failed to start, aborting')
+    raise e
+
 queue = Queue[tuple[int, Measurement]]()
 threads = list[Thread]()
 event_stop = Event()
-for index, config in enumerate(configs):
-    sensor = sensors[config.type]
-    settings = sensor.settings.deserialize(config.data)
-    instance = sensor.sensor(settings)
-    thread = Thread(target=measure_loop, args=(instance, index, queue, config.secs, event_stop))
+for index, inst in enumerate(insts):
+    thread = Thread(target=measure_loop, args=(inst, index, queue, configs[index].secs, event_stop))
     thread.start()
 
 thread = Thread(target=upload_loop, args=(url, host, token, configs, queue, min_upload_secs, max_upload_secs, max_backlog, event_stop))
@@ -134,7 +142,7 @@ thread.start()
 
 print('Running')
 
-input('Press Enter to stop')
+input('Press Enter to stop\n')
 
 event_stop.set()
 print('Waiting for threads to join')

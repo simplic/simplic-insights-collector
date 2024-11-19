@@ -33,6 +33,7 @@ parser = ArgumentParser(
     description='Reads and sends sensor data to OxS'
 )
 parser.add_argument('-s', '--settings', default='./settings.json')
+parser.add_argument('--debug', action='store_true')
 
 args = parser.parse_args()
 
@@ -90,4 +91,10 @@ for pkg in pkgs:
     shutil.copytree(src_path, dst_path)
 
 print('Setup complete')
-subprocess.run(('./venv/bin/python', './main.py', os.path.abspath(args.settings)), cwd=dir_run)
+subprocess.run(
+    (
+        './venv/bin/python', './main.py',
+        os.path.abspath(args.settings),
+        'debug' if args.debug else 'normal'
+    ),
+    cwd=dir_run)

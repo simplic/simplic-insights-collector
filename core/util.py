@@ -1,3 +1,4 @@
+from types import EllipsisType
 from typing import Any, TypeVar
 
 
@@ -7,8 +8,8 @@ def cast(name: str, value: Any, to: type[_T]) -> _T:
         return value
     raise TypeError(f'expected {name} to be a {to.__name__}')
 
-def jsonget(json: dict[str, Any], key: str, to: type[_T], default: _T | ellipsis = ...) -> _T:
-    if not isinstance(default, ellipsis) and key not in json:
+def jsonget(json: dict[str, Any], key: str, to: type[_T], default: _T | EllipsisType = ...) -> _T:
+    if default is not ... and key not in json:
         return default
     return cast(key, json[key], to)
 
