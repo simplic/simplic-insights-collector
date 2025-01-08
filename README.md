@@ -9,7 +9,7 @@ Simplic insights host/collector
    An example is given as `settings.example.json`
 2. Set URL, API key and upload interval
 3. Configure the sensors you need
-4. Run `python launch.py`
+4. Run `python launcher.py`
 
 
 
@@ -85,8 +85,11 @@ The following section contains the available sensor types
 - Disk usage
   - Get total and available disk usage
 
-### Disk usage
-
+### Package `file`
+- Path exists
+  - Check if a file or directory exists
+- Path Age
+  - Check if a file or directory was modified recently 
 
 ### Package `rabbitmq`
 
@@ -111,18 +114,6 @@ Checks whether a given service is running
 ### Process
 
 Checks whether a process is running
-
-### Directory file age
-
-Checks, whether files in a directory are not older than x (seconds?)
-
-### Directory exists
-
-Checks whether a directory exists
-
-### File eixsts
-
-Checks whether a file exists
 
 ### Http
 

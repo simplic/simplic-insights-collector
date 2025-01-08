@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Generic, Self, TypeVar
 
@@ -36,7 +36,7 @@ class Status(str, Enum):
 class Measurement:
     @classmethod
     def now(cls, status: Status, data: Any = None, error: str | None = None, trace: list[str] | None = None) -> Self:
-        return cls(datetime.now(), status, data, error, trace)
+        return cls(datetime.now(tz=timezone.utc), status, data, error, trace)
 
     def __init__(self, time: datetime, status: Status, data: Any = None, error: str | None = None, trace: list[str] | None = None) -> None:
         self.time = time
@@ -47,7 +47,7 @@ class Measurement:
 
     def toJSON(self) -> dict[str, Any]:
         return {
-            'time': str(self.time),
+            'time': self.time.isoformat().replace('+00:00', 'Z'),
             'status': self.status.value,
             'data': self.data,
             'error': {

@@ -71,9 +71,9 @@ def upload_loop(url: str, host: str, token: str, configs: list[SensorConfig], qu
         if len(sdata) > 0 or time.time() - last > max_secs:
             headers = {'Authorization': 'Bearer ' + token}
             data = {'host': host, 'sensors': sdata}
-            if debug:
-                print('sending', json.dumps(data, indent='  '))
             try:
+                if debug:
+                    print('sending', json.dumps(data, indent='  '))
                 requests.post(url, headers=headers, json=data)
                 last = time.time()
                 not_send = {}

@@ -1,0 +1,8 @@
+{
+    "$schema": "../../schemas/manifest.schema.json",
+    "pkg": "file",
+    "version": "0.1.0",
+    "name": "Filesystem",
+    "description": "Various filesystem-related sensors",
+    "dependencies": []
+}

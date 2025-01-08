@@ -111,7 +111,7 @@ class DiskUsageSensor(SensorBase[DiskUsageSettings]):
         xunhealthy = eval(self.settings.unhealthy, vars)
         xdegraded = eval(self.settings.degraded, vars)
         unhealthy = cast('unhealthy()', xunhealthy, bool)
-        warning = cast('warning()', xdegraded, bool)
+        degraded = cast('warning()', xdegraded, bool)
 
         data = {
             'disk': {'total': disk.total, 'free': disk.free},
@@ -119,7 +119,7 @@ class DiskUsageSensor(SensorBase[DiskUsageSettings]):
 
         if unhealthy:
             return Measurement.now(Status.UNHEALTHY, data)
-        if warning:
+        if degraded:
             return Measurement.now(Status.DEGRADED, data)
         return Measurement.now(Status.HEALTHY, data)
 
