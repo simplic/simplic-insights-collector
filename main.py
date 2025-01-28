@@ -16,7 +16,6 @@ import psutil
 import requests
 
 from core import Measurement, SensorBase, SensorDef, Status, cast, parse_interval
-from core.classes import Metric
 from core.util import eprint, format_time, get_ip_addr, jsonget
 
 @dataclass
@@ -82,7 +81,8 @@ def _send_measurement(url: str, token: str, config: SensorConfig, value: Measure
     try:
         if debug:
             print('sending to', repr(url), json.dumps(data, indent='  '))
-        requests.post(url, headers=headers, json=data)
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()
     except Exception as e:
         eprint(f'ERR: Upload failed: {e}')
 
@@ -102,7 +102,8 @@ def _send_machine_data(url: str, token: str, name: str):
     try:
         if debug:
             print('sending to', repr(url), json.dumps(data, indent='  '))
-        requests.patch(url, headers=headers, json=data)
+        response = requests.patch(url, headers=headers, json=data)
+        response.raise_for_status()
     except Exception as e:
         print(f'ERR: Upload failed: {e}')
 
