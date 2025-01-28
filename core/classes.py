@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Generic, Self, TypeVar
 
+from core.util import format_time
+
 """
 A version (major.minor.patch+extra)
 """
@@ -33,23 +35,36 @@ class Status(str, Enum):
     DEGRADED = 'degraded'
     HEALTHY = 'healthy'
 
+@dataclass
+class Metric:
+    name: str
+    unit: str
+    value: Any
+
+    def toJSON(self) -> dict[str, Any]:
+        return {
+            'name': self.name,
+            'unit': self.unit,
+            'value': self.value,
+        }
+
 class Measurement:
     @classmethod
-    def now(cls, status: Status, data: Any = None, error: str | None = None, trace: list[str] | None = None) -> Self:
-        return cls(datetime.now(tz=timezone.utc), status, data, error, trace)
+    def now(cls, status: Status, metrics: list[Metric] = [], error: str | None = None, trace: list[str] | None = None) -> Self:
+        return cls(datetime.now(tz=timezone.utc), status, metrics, error, trace)
 
-    def __init__(self, time: datetime, status: Status, data: Any = None, error: str | None = None, trace: list[str] | None = None) -> None:
+    def __init__(self, time: datetime, status: Status, metrics: list[Metric] = [], error: str | None = None, trace: list[str] | None = None) -> None:
         self.time = time
         self.status = status
-        self.data = data
+        self.metrics = metrics
         self.error = error
         self.trace = trace
 
     def toJSON(self) -> dict[str, Any]:
         return {
-            'time': self.time.isoformat().replace('+00:00', 'Z'),
+            'time': format_time(self.time),
             'status': self.status.value,
-            'data': self.data,
+            'metrics': self.metrics,
             'error': {
                 'message': self.error,
                 'trace': self.trace,

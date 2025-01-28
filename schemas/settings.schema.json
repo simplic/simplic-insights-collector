@@ -20,16 +20,26 @@
                 "2h",
                 "1h2m3s"
             ]
+        },
+        "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
         }
     },
     "type": "object",
     "properties": {
-        "host": {
+        "uuid": {
+            "$ref": "#/$defs/uuid",
+            "description": "Unique identifier of the host"
+        },
+        "name": {
             "type": "string",
             "description": "Name of the sensor host/collector"
         },
         "url": {
             "type": "string",
+            "format": "url",
             "description": "URL of the endpoint"
         },
         "token": {
@@ -64,6 +74,10 @@
             "items": {
                 "type": "object",
                 "properties": {
+                    "uuid": {
+                        "$ref": "#/$defs/uuid",
+                        "description": "Unique identifier of the sensor"
+                    },
                     "type": {
                         "type": "string",
                         "description": "Type of the sensor"
@@ -80,6 +94,7 @@
                     }
                 },
                 "required": [
+                    "uuid",
                     "type",
                     "name",
                     "interval",
@@ -89,7 +104,7 @@
         }
     },
     "required": [
-        "host",
+        "uuid",
         "url",
         "token",
         "upload",

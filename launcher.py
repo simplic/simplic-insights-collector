@@ -7,7 +7,7 @@ import subprocess
 from typing import Any, TypeVar
 import venv
 
-DEFAULT_DEPS = ['requests']
+DEFAULT_DEPS = ['requests', 'psutil']
 
 _T = TypeVar('_T')
 def _cast(name: str, value: Any, to: type[_T]) -> _T:

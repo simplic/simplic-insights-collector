@@ -1,25 +1,41 @@
 from collections import deque
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import importlib
 import json
+import os
+import platform
 from queue import Empty, Queue
 import sys
 from threading import Event, Thread
 import time
 import traceback
-from typing import Any
+from uuid import UUID
 
+import psutil
 import requests
 
 from core import Measurement, SensorBase, SensorDef, Status, cast, parse_interval
+from core.classes import Metric
+from core.util import eprint, format_time, get_ip_addr, jsonget
+
+@dataclass
+class HostConfig:
+    uuid: UUID
+    name: str
+    url: str
+    token: str
+    min_secs: float
+    max_secs: float
+    max_backlog: int
 
 @dataclass
 class SensorConfig:
+    uuid: UUID
     type: str
     name: str
-    data: str
+    data: dict
     secs: float
-
 
 def measure_loop(sensor: SensorBase, index: int, queue: Queue[tuple[int, Measurement]], secs: float, stop: Event):
     # TODO: More accurate timing, timeout if a sensor takes too long
@@ -27,7 +43,7 @@ def measure_loop(sensor: SensorBase, index: int, queue: Queue[tuple[int, Measure
     try:
         sensor.start()
     except Exception as e:
-        print(f'ERR: Sensor failed to start: {e}')
+        eprint(f'ERR: Sensor failed to start: {e}')
         queue.put((index, Measurement.now(Status.ERROR, error=str(e))))
         # The sensor is in an invalid state
         return
@@ -41,44 +57,89 @@ def measure_loop(sensor: SensorBase, index: int, queue: Queue[tuple[int, Measure
 
         queue.put((index, result))
 
-def upload_loop(url: str, host: str, token: str, configs: list[SensorConfig], queue: Queue[tuple[int, Measurement]], min_secs: float, max_secs: float, backlog: int, stop: Event):
+def _send_measurement(url: str, token: str, config: SensorConfig, value: Measurement):
+    metrics = []
+    for metric in value.metrics:
+        # Ignore metrics with invalid JSON
+        try:
+            metrics.append(metric.toJSON())
+        except Exception as e:
+            eprint(f'ERR: Serializing metric failed: {e}')
+
+    headers = {'Authorization': 'Bearer ' + token}
+    data = {
+        'time': format_time(value.time),
+        'sensorId': str(config.uuid),
+        'message': config.name,
+        'sensorHealthState': value.status,
+        'metrics': metrics,
+    }
+    if value.error is not None:
+        data['error'] = value.error
+    if value.trace is not None:
+        data['trace'] = value.trace
+    
+    try:
+        if debug:
+            print('sending to', repr(url), json.dumps(data, indent='  '))
+        requests.post(url, headers=headers, json=data)
+    except Exception as e:
+        eprint(f'ERR: Upload failed: {e}')
+
+def _send_machine_data(url: str, token: str, name: str):
+    boot_time = datetime.fromtimestamp(psutil.boot_time(), tz=timezone.utc)
+
+    headers = {'Authorization': 'Bearer ' + token}
+    data = {
+        'ipAddress': get_ip_addr(),
+        'hostName': name,
+        'domain': os.environ.get('userdomain', None),
+        'operatingSystem': platform.system(),
+        'osVersion': platform.release(),
+        'bootDateTime': format_time(boot_time),
+    }
+
+    try:
+        if debug:
+            print('sending to', repr(url), json.dumps(data, indent='  '))
+        requests.patch(url, headers=headers, json=data)
+    except Exception as e:
+        print(f'ERR: Upload failed: {e}')
+
+def upload_loop(host: HostConfig, configs: list[SensorConfig], queue: Queue[tuple[int, Measurement]], stop: Event):
     # TODO: More accurate timing
 
+    url_machine = host.url + '/Host/machine-data/' + str(host.uuid)
+    url_measure = host.url + '/Collector'
+
+    _send_machine_data(url_machine, host.token, host.name)
     last = time.time()
-    print(min_secs)
-    not_send = dict[int, deque[Measurement]]()
-    while not stop.wait(min_secs):
+    to_send = dict[int, deque[Measurement]]()
+    while not stop.wait(host.min_secs):
         # Batch measurements
         while True:
             try:
                 index, item = queue.get_nowait()
-                if index not in not_send:
-                    not_send[index] = deque()
+                if index not in to_send:
+                    to_send[index] = deque()
                 # Remove old measurements
-                if len(not_send[index]) >= backlog:
-                    del not_send[index][0]
-                not_send[index].append(item)
+                if len(to_send[index]) >= host.max_backlog:
+                    del to_send[index][0]
+                to_send[index].append(item)
             except Empty:
                 break
 
-        # Convert to JSON-serializable
-        sdata = list[dict[str, Any]]()
-        for index, values in not_send.items():
-            config = configs[index]
-            sdata.append({'type': config.type, 'name': config.name, 'data': list(map(Measurement.toJSON, values))})
-
+        # Heartbeat
+        if time.time() - last > host.max_secs:
+            last = time.time()
+            _send_machine_data(url_machine, host.token, host.name)
+        
         # Upload data
-        if len(sdata) > 0 or time.time() - last > max_secs:
-            headers = {'Authorization': 'Bearer ' + token}
-            data = {'host': host, 'sensors': sdata}
-            try:
-                if debug:
-                    print('sending', json.dumps(data, indent='  '))
-                requests.post(url, headers=headers, json=data)
-                last = time.time()
-                not_send = {}
-            except Exception as e:
-                print(f'ERR: Upload failed: {e}')
+        # TODO: Add batching to API
+        for index, values in to_send.items():
+            for value in values:
+                _send_measurement(url_measure, host.token, configs[index], value)
+        to_send = {}
 
 # This should be set by launcher.py
 settings_file = sys.argv[1]
@@ -87,29 +148,37 @@ debug = sys.argv[2] == 'debug'
 with open(settings_file, 'rt') as f:
     settings = json.load(f)
 
-url = cast('url', settings['url'], str)
-host = cast('host', settings['host'], str)
-token = cast('token', settings['token'], str)
-upload = cast('upload', settings['upload'], dict)
-min_upload_secs = parse_interval(cast('min_interval', upload['min_interval'], str))
-max_upload_secs = parse_interval(cast('max_interval', upload['max_interval'], str))
-max_backlog = cast('max_backglog', upload['max_backlog'], int)
+# Load config file
+uuid = UUID(jsonget(settings, 'uuid', str))
+url = jsonget(settings, 'url', str)
+name = jsonget(settings, 'name', str, default=platform.node())
+token = jsonget(settings, 'token', str)
+upload = jsonget(settings, 'upload', dict)
+min_upload_secs = parse_interval(jsonget(upload, 'min_interval', str))
+max_upload_secs = parse_interval(jsonget(upload, 'max_interval', str))
+max_backlog = jsonget(upload, 'max_backlog', int)
 
+host = HostConfig(uuid, name, url, token, min_upload_secs, max_upload_secs, max_backlog)
+
+
+# Load sensor settings
 pkgs = set[str]()
 configs = list[SensorConfig]()
 for sensor in settings['sensors']:
-    type = cast('type', sensor['type'], str)
-    name = cast('name', sensor['name'], str)
-    data = sensor['settings']
+    uuid = UUID(jsonget(sensor, 'uuid', str))
+    type = jsonget(sensor, 'type', str)
+    name = jsonget(sensor, 'name', str)
+    data = jsonget(sensor, 'settings', dict)
 
     pkg, id = type.split(':')
     pkgs.add(pkg)
-    secs = parse_interval(cast('interval', sensor['interval'], str))
+    secs = parse_interval(jsonget(sensor, 'interval', str))
     if secs < 0.05:
         raise ValueError('Interval must be >= 50ms')
 
-    configs.append(SensorConfig(type, name, data, secs))
+    configs.append(SensorConfig(uuid, type, name, data, secs))
 
+# Load sensor python scripts
 sensors = dict[str, SensorDef]()
 for pkg in pkgs:
     print('Loading package', pkg)
@@ -121,6 +190,7 @@ for pkg in pkgs:
 
 print('Loaded', len(sensors), 'sensor(s) from', len(pkgs), 'package(s)')
 
+# Instantiate sensor scripts
 print('Creating', len(configs), 'sensors')
 insts = list[SensorBase]()
 try:
@@ -132,6 +202,7 @@ except Exception as e:
     print('Sensors failed to start, aborting')
     raise e
 
+# Run measuring loop on a different thread
 queue = Queue[tuple[int, Measurement]]()
 threads = list[Thread]()
 event_stop = Event()
@@ -139,7 +210,7 @@ for index, inst in enumerate(insts):
     thread = Thread(target=measure_loop, args=(inst, index, queue, configs[index].secs, event_stop))
     thread.start()
 
-thread = Thread(target=upload_loop, args=(url, host, token, configs, queue, min_upload_secs, max_upload_secs, max_backlog, event_stop))
+thread = Thread(target=upload_loop, args=(host, configs, queue, event_stop))
 thread.start()
 
 print('Running')

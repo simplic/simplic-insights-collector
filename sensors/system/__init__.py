@@ -2,6 +2,8 @@ from core import Measurement, SensorBase, SensorDef, SettingsBase, Status, cast
 import psutil
 from typing import Any, Self
 
+from core.classes import Metric
+
 class CPUUsageSettings(SettingsBase):
     @classmethod
     def deserialize(cls, json: Any) -> Self:
@@ -30,16 +32,18 @@ class CPUUSageSensor(SensorBase[CPUUsageSettings]):
         unhealthy = cast('unhealthy()', xunhealthy, bool)
         degraded = cast('degraded()', xdegraded, bool)
 
-        data = {
-            'percent': percent,
-            'freq': {'current': freq.current, 'min': freq.min, 'max': freq.max}
-        } if self.settings.extra else {}
+        metrics = [
+            Metric('percent', '%', percent),
+            Metric('freq.cur', 'Hz', freq.current),
+            Metric('freq.min', 'Hz', freq.min),
+            Metric('freq.max', 'Hz', freq.max),
+         ] if self.settings.extra else []
 
         if unhealthy:
-            return Measurement.now(Status.UNHEALTHY, data)
+            return Measurement.now(Status.UNHEALTHY, metrics)
         if degraded:
-            return Measurement.now(Status.DEGRADED, data)
-        return Measurement.now(Status.HEALTHY, data)
+            return Measurement.now(Status.DEGRADED, metrics)
+        return Measurement.now(Status.HEALTHY, metrics)
 
 
 
@@ -71,16 +75,18 @@ class RAMUsageSensor(SensorBase[RAMUsageSettings]):
         unhealthy = cast('unhealthy()', xunhealthy, bool)
         warning = cast('warning()', xdegraded, bool)
 
-        data = {
-            'mem': {'total': mem.total, 'available': mem.available},
-            'swap': {'total': swap.total, 'free': swap.free}
-        } if self.settings.extra else {}
+        metrics = [
+            Metric('mem.total', 'B', mem.total),
+            Metric('mem.free', 'B', mem.available),
+            Metric('swap.total', 'B', swap.total),
+            Metric('swap.free', 'B', swap.free),
+        ] if self.settings.extra else []
 
         if unhealthy:
-            return Measurement.now(Status.UNHEALTHY, data)
+            return Measurement.now(Status.UNHEALTHY, metrics)
         if warning:
-            return Measurement.now(Status.DEGRADED, data)
-        return Measurement.now(Status.HEALTHY, data)
+            return Measurement.now(Status.DEGRADED, metrics)
+        return Measurement.now(Status.HEALTHY, metrics)
 
 
 
@@ -113,15 +119,16 @@ class DiskUsageSensor(SensorBase[DiskUsageSettings]):
         unhealthy = cast('unhealthy()', xunhealthy, bool)
         degraded = cast('warning()', xdegraded, bool)
 
-        data = {
-            'disk': {'total': disk.total, 'free': disk.free},
-        } if self.settings.extra else {}
+        metrics = [
+            Metric('total', 'B', disk.total),
+            Metric('free', 'B', disk.free),
+        ] if self.settings.extra else []
 
         if unhealthy:
-            return Measurement.now(Status.UNHEALTHY, data)
+            return Measurement.now(Status.UNHEALTHY, metrics)
         if degraded:
-            return Measurement.now(Status.DEGRADED, data)
-        return Measurement.now(Status.HEALTHY, data)
+            return Measurement.now(Status.DEGRADED, metrics)
+        return Measurement.now(Status.HEALTHY, metrics)
 
 
 

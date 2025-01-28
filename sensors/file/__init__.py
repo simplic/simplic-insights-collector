@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 import os
 from typing import Any, Self
 
+from core.classes import Metric
+from core.util import format_time
+
 class ExistsSettings(SettingsBase):
     @classmethod
     def deserialize(cls, json: Any) -> Self:
@@ -22,24 +25,24 @@ class ExistsSensor(SensorBase[ExistsSettings]):
         self.settings = settings
 
     def measure(self) -> Measurement:
-        data = {}
+        metrics = []
         status = Status.UNHEALTHY
 
         if self.settings.file:
             file_exists = os.path.isfile(self.settings.path)
-            data['file'] = file_exists
+            metrics.append(Metric('is_file', 'bool', file_exists))
 
             if file_exists:
                 status = Status.HEALTHY
         
         if self.settings.dir:
             dir_exists = os.path.isdir(self.settings.path)
-            data['dir'] = dir_exists
+            metrics.append(Metric('is_dir', 'bool', dir_exists))
             
             if dir_exists:
                 status = Status.HEALTHY
 
-        return Measurement.now(status, data)
+        return Measurement.now(status, metrics)
 
 class AgeSettings(SettingsBase):
     @classmethod
@@ -63,7 +66,10 @@ class AgeSensor(SensorBase[AgeSettings]):
     def measure(self) -> Measurement:
         if os.path.exists(self.settings.path):
             age = datetime.fromtimestamp(os.path.getmtime(self.settings.path), tz=timezone.utc)
-            data = {'age': age.isoformat().replace('+00:00', 'Z')}
+            
+            metrics = [
+                Metric('age', 'time', format_time(age))
+            ]
 
             if age < self.settings.unhealthy:
                 status = Status.UNHEALTHY
@@ -72,9 +78,9 @@ class AgeSensor(SensorBase[AgeSettings]):
             else:
                 status = Status.HEALTHY
             
-            return Measurement.now(status, data)
+            return Measurement.now(status, metrics)
         
-        return Measurement.now(Status.ERROR, error='path does not exist', data={})
+        return Measurement.now(Status.ERROR, error='path does not exist')
 
 SENSORS = [
     SensorDef('age', AgeSensor, AgeSettings),
