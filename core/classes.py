@@ -19,21 +19,21 @@ class Version:
     extra: str | None = None
 
 class Status(str, Enum):
-    UNKNOWN = 'unknown'
+    UNKNOWN = 'Unknown'
     """The status of a sensor is not known"""
 
-    TIMEOUT = 'timeout'
+    TIMEOUT = 'TimeOut'
     """Reading the sensor timed out"""
 
-    ERROR = 'error'
+    ERROR = 'Error'
     """An error occured while reading the sensor"""
 
-    UNSET = 'unset'
+    UNSET = 'Unset'
     """There are no rules that specify the status of the sensor"""
 
-    UNHEALTHY = 'unhealthy'
-    DEGRADED = 'degraded'
-    HEALTHY = 'healthy'
+    UNHEALTHY = 'Unhealthy'
+    DEGRADED = 'Degraded'
+    HEALTHY = 'Healthy'
 
 @dataclass
 class Metric:
