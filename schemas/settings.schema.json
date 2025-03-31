@@ -103,10 +103,6 @@
                                 "type": "string",
                                 "description": "Package identifier"
                             },
-                            "owner": {
-                                "type": "string",
-                                "description": "Username of the repository owner"
-                            },
                             "repo": {
                                 "type": "string",
                                 "description": "Repository identifier"
@@ -121,7 +117,6 @@
                         "required": [
                             "type",
                             "pkg",
-                            "owner",
                             "repo"
                         ]
                     }

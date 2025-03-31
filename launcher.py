@@ -54,8 +54,8 @@ def _install_folder(package: ReadDict) -> ReadDict:
 
 def _install_github(package: ReadDict) -> ReadDict:
     id = package['pkg'].as_str()
-    owner = package['owner'].as_str()
-    repo = package['repo'].as_str()
+    repo_id = package['repo'].as_str()
+    owner, repo = repo_id.split('/', 1)
     version = package['version'].as_str('latest')
 
     owner_safe = urllib.parse.quote(owner)
