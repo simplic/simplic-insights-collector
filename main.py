@@ -16,7 +16,7 @@ import psutil
 import requests
 
 from core.classes import Measurement, SensorBase, SensorDef, Status
-from core.config import ConfigDict, parse_config_file
+from core.config import ReadDict, parse_file
 from core.util import cast, eprint, format_time, get_ip_addr, parse_interval
 
 @dataclass
@@ -34,7 +34,7 @@ class SensorConfig:
     uuid: UUID
     type: str
     name: str
-    data: ConfigDict
+    data: ReadDict
     secs: float
 
 def measure_loop(sensor: SensorBase, index: int, queue: Queue[tuple[int, Measurement]], secs: float, stop: Event):
@@ -147,7 +147,7 @@ def upload_loop(host: HostConfig, configs: list[SensorConfig], queue: Queue[tupl
 settings_file = sys.argv[1]
 debug = sys.argv[2] == 'debug'
 
-settings = parse_config_file(settings_file).as_dict()
+settings = parse_file(settings_file, 'settings').as_dict()
 
 # Load config file
 uuid = UUID(settings['uuid'].as_str())

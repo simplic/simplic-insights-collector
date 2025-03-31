@@ -68,6 +68,66 @@
                 "max_backlog"
             ]
         },
+        "packages": {
+            "type": "array",
+            "description": "Package sources",
+            "items": {
+                "type": "object",
+                "oneOf": [
+                    {
+                        "description": "Install sensor package from a directory",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "const": "folder"
+                            },
+                            "path": {
+                                "type": "string",
+                                "format": "path",
+                                "description": "Path to folder containing manifest.json and sensors/"
+                            }
+                        },
+                        "required": [
+                            "type",
+                            "path"
+                        ]
+                    },
+                    {
+                        "description": "Install sensor package from a github release",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "const": "github"
+                            },
+                            "pkg": {
+                                "type": "string",
+                                "description": "Package identifier"
+                            },
+                            "owner": {
+                                "type": "string",
+                                "description": "Username of the repository owner"
+                            },
+                            "repo": {
+                                "type": "string",
+                                "description": "Repository identifier"
+                            },
+                            "version": {
+                                "type": "string",
+                                "format": "version",
+                                "description": "Version number or 'latest'",
+                                "default": "latest"
+                            }
+                        },
+                        "required": [
+                            "type",
+                            "pkg",
+                            "owner",
+                            "repo"
+                        ]
+                    }
+                ]
+            }
+        },
         "sensors": {
             "type": "array",
             "description": "Sensor configurations",

@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Generic, Self, TypeVar
 
 from core.util import format_time
-from core.config import ConfigDict
+from core.config import ReadDict
 
 """
 A version (major.minor.patch+extra)
@@ -92,7 +92,7 @@ class SettingsBase:
         return {}
 
     @classmethod
-    def deserialize(cls, conf: ConfigDict) -> Self:
+    def deserialize(cls, conf: ReadDict) -> Self:
         """
         Load settings from the config file
 

@@ -3,12 +3,12 @@ import os
 from typing import Self
 
 from core.classes import Measurement, Metric, SensorBase, SensorDef, SettingsBase, Status
-from core.config import ConfigDict, ConfigValue
+from core.config import ReadDict
 from core.util import format_time
 
 class ExistsSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, conf: ConfigDict) -> Self:
+    def deserialize(cls, conf: ReadDict) -> Self:
         path = conf['path'].as_str()
         file = conf['file'].as_bool(False)
         dir = conf['dir'].as_bool(False)
@@ -45,7 +45,7 @@ class ExistsSensor(SensorBase[ExistsSettings]):
 
 class AgeSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, conf: ConfigDict) -> Self:
+    def deserialize(cls, conf: ReadDict) -> Self:
         path = conf['path'].as_str()
         unhealthy = datetime.fromisoformat(conf['unhealthy'].as_str())
         degraded = datetime.fromisoformat(conf['degraded'].as_str())

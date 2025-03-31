@@ -2,12 +2,12 @@ import psutil
 from typing import Self
 
 from core.classes import Measurement, Metric, SensorBase, SensorDef, SettingsBase, Status
-from core.config import ConfigDict
+from core.config import ReadDict
 from core.util import cast
 
 class CPUUsageSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, conf: ConfigDict) -> Self:
+    def deserialize(cls, conf: ReadDict) -> Self:
         unhealthy = conf['unhealthy'].as_str()
         degraded = conf['degraded'].as_str()
         extra = conf['extra'].as_bool()
@@ -49,7 +49,7 @@ class CPUUSageSensor(SensorBase[CPUUsageSettings]):
 
 class RAMUsageSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, conf: ConfigDict) -> Self:
+    def deserialize(cls, conf: ReadDict) -> Self:
         unhealthy = conf['unhealthy'].as_str()
         degraded = conf['degraded'].as_str()
         extra = conf['extra'].as_bool()
@@ -91,7 +91,7 @@ class RAMUsageSensor(SensorBase[RAMUsageSettings]):
 
 class DiskUsageSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, conf: ConfigDict) -> Self:
+    def deserialize(cls, conf: ReadDict) -> Self:
         path = cast('path', conf['path'], str)
         unhealthy = conf['unhealthy'].as_str()
         degraded = conf['degraded'].as_str()

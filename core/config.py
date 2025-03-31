@@ -5,7 +5,7 @@ Simple configuration parser. Supports json data structures (null, bool, number, 
 from __future__ import annotations
 
 import json
-from typing import IO, Any, Callable, Iterator, Mapping, Sequence, TypeVar, overload
+from typing import IO, Callable, Iterator, Mapping, Sequence, TypeVar, overload
 
 _D = TypeVar('_D')
 _T = TypeVar('_T')
@@ -13,14 +13,14 @@ _R = TypeVar('_R')
 
 _default = object()
 
-ConfigData = None | bool | int | float | str | list['ConfigData'] | dict[str, 'ConfigData']
+ReadData = None | bool | int | float | str | list['ReadData'] | dict[str, 'ReadData']
 
-class ConfigValue:
+class ReadValue:
     """
     Base value, can be casted using as_* methods
     """
 
-    def __init__(self, data: ConfigData, path: str) -> None:
+    def __init__(self, data: ReadData, path: str) -> None:
         self._data = data
         self._path = path
 
@@ -77,38 +77,38 @@ class ConfigValue:
     def as_str(self, default: _D = _default) -> str | _D: return self.as_type(str, default=default)
 
     @overload
-    def as_list(self) -> ConfigList: ...
+    def as_list(self) -> ReadList: ...
     @overload
-    def as_list(self, default: _D) -> ConfigList | _D: ...
-    def as_list(self, default: _D = _default) -> ConfigList | _D:
-        return self._as_type(lambda v: ConfigList(v, self._path), default, Sequence) # type: ignore
+    def as_list(self, default: _D) -> ReadList | _D: ...
+    def as_list(self, default: _D = _default) -> ReadList | _D:
+        return self._as_type(lambda v: ReadList(v, self._path), default, Sequence) # type: ignore
     
     @overload
-    def as_dict(self) -> ConfigDict: ...
+    def as_dict(self) -> ReadDict: ...
     @overload
-    def as_dict(self, default: _D) -> ConfigDict | _D: ...
-    def as_dict(self, default: _D = _default) -> ConfigDict | _D:
-        return self._as_type(lambda v: ConfigDict(v, self._path), default, dict) # type: ignore
+    def as_dict(self, default: _D) -> ReadDict | _D: ...
+    def as_dict(self, default: _D = _default) -> ReadDict | _D:
+        return self._as_type(lambda v: ReadDict(v, self._path), default, dict) # type: ignore
 
-class ConfigList(Sequence[ConfigValue]):
+class ReadList(Sequence[ReadValue]):
     """
     List accessor
     """
 
-    def __init__(self, value: list[ConfigData], path: str) -> None:
+    def __init__(self, value: list[ReadData], path: str) -> None:
         self.value = value
         self.path = path
 
     @overload
-    def __getitem__(self, index: int) -> ConfigValue: ...
+    def __getitem__(self, index: int) -> ReadValue: ...
     @overload
-    def __getitem__(self, index: slice[int | None, int | None, int | None]) -> Sequence[ConfigValue]: ...
-    def __getitem__(self, index: int | slice[int | None, int | None, int | None]) -> ConfigValue | Sequence[ConfigValue]:
+    def __getitem__(self, index: slice[int | None, int | None, int | None]) -> Sequence[ReadValue]: ...
+    def __getitem__(self, index: int | slice[int | None, int | None, int | None]) -> ReadValue | Sequence[ReadValue]:
         count = len(self.value)
         
         if isinstance(index, int):
             item = self.value[index] if index in range(-count, count) else None
-            return ConfigValue(item, f'{self.path}[{index}]')
+            return ReadValue(item, f'{self.path}[{index}]')
         
         start = index.start if index.start is not None else 0
         stop = index.stop if index.stop is not None else -1
@@ -122,44 +122,44 @@ class ConfigList(Sequence[ConfigValue]):
         items = []
         for i in range(start, stop, step):
             item = self.value[i] if i in range(-count, count) else None
-            items.append(ConfigValue(item, f'{self.path}[{index}]'))
+            items.append(ReadValue(item, f'{self.path}[{index}]'))
 
         return items
 
-    def __iter__(self) -> Iterator[ConfigValue]:
+    def __iter__(self) -> Iterator[ReadValue]:
         for i, item in enumerate(self.value):
-            yield ConfigValue(item, f'{self.path}[{i}]')
+            yield ReadValue(item, f'{self.path}[{i}]')
 
     def __len__(self) -> int:
         return len(self.value)
     
     def __contains__(self, value: object) -> bool:
-        if isinstance(value, ConfigValue):
+        if isinstance(value, ReadValue):
             return value._data in self.value
         return value in self.value
     
-    def __reversed__(self) -> Iterator[ConfigValue]:
+    def __reversed__(self) -> Iterator[ReadValue]:
         for i, item in enumerate(reversed(self.value)):
-            yield ConfigValue(item, f'{self.path}[{i}]')
+            yield ReadValue(item, f'{self.path}[{i}]')
 
-    def iter_bool(self) -> Iterator[bool]: return map(ConfigValue.as_bool, self)
-    def iter_int(self) -> Iterator[int]: return map(ConfigValue.as_int, self)
-    def iter_float(self) -> Iterator[float]: return map(ConfigValue.as_float, self)
-    def iter_str(self) -> Iterator[str]: return map(ConfigValue.as_str, self)
-    def iter_list(self) -> Iterator[ConfigList]: return map(ConfigValue.as_list, self)
-    def iter_dict(self) -> Iterator[ConfigDict]: return map(ConfigValue.as_dict, self)
+    def iter_bool(self) -> Iterator[bool]: return map(ReadValue.as_bool, self)
+    def iter_int(self) -> Iterator[int]: return map(ReadValue.as_int, self)
+    def iter_float(self) -> Iterator[float]: return map(ReadValue.as_float, self)
+    def iter_str(self) -> Iterator[str]: return map(ReadValue.as_str, self)
+    def iter_list(self) -> Iterator[ReadList]: return map(ReadValue.as_list, self)
+    def iter_dict(self) -> Iterator[ReadDict]: return map(ReadValue.as_dict, self)
 
-class ConfigDict(Mapping[str, ConfigValue]):
+class ReadDict(Mapping[str, ReadValue]):
     """
     Dictionary accessor
     """
 
-    def __init__(self, value: dict[str, ConfigData], path: str) -> None:
+    def __init__(self, value: dict[str, ReadData], path: str) -> None:
         self.value = value
         self.path = path
 
-    def __getitem__(self, key: str) -> ConfigValue:
-        return ConfigValue(self.value.get(key, None), f'{self.path}.{key}')
+    def __getitem__(self, key: str) -> ReadValue:
+        return ReadValue(self.value.get(key, None), f'{self.path}.{key}')
     
     def __iter__(self) -> Iterator[str]:
         return iter(self.value)
@@ -170,10 +170,10 @@ class ConfigDict(Mapping[str, ConfigValue]):
     def __contains__(self, key: object) -> bool:
         return key in self.value
 
-def parse_config(file: IO[str]) -> ConfigValue:
-    return ConfigValue(json.load(file), '$')
+def parse_io(file: IO[str], name: str = '$') -> ReadValue:
+    return ReadValue(json.load(file), name)
 
-def parse_config_file(path: str) -> ConfigValue:
+def parse_file(path: str, name: str = '$') -> ReadValue:
     with open(path, 'rt') as f:
-        return parse_config(f)
+        return parse_io(f, name)
     

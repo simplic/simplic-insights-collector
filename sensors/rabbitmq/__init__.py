@@ -3,11 +3,11 @@ import pika
 import pika.exceptions
 from typing import Self
 
-from core.config import ConfigValue
+from core.config import ReadValue
 
 class RabbitMQSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, conf: ConfigValue) -> Self:
+    def deserialize(cls, conf: ReadValue) -> Self:
         json = conf.as_dict()
         host = json['host'].as_str()
         port = json['port'].as_int(5672)
