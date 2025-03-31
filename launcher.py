@@ -99,7 +99,7 @@ def _install_github(package: ReadDict) -> ReadDict:
         response = requests.get(download_url + '/manifest.json', stream=True)
         response.raise_for_status()
         with open(config_dst_path, 'wb') as f:
-            for chunk in response.iter_content():
+            for chunk in response.iter_content(chunk_size=4096):
                 f.write(chunk)
 
         config = parse_file(config_dst_path).as_dict()
@@ -115,7 +115,7 @@ def _install_github(package: ReadDict) -> ReadDict:
         response = requests.get(download_url + '/sensors.zip', stream=True)
         response.raise_for_status()
         with open(archive_path, 'wb') as f:
-            for chunk in response.iter_content():
+            for chunk in response.iter_content(chunk_size=4096):
                 f.write(chunk)
 
         print('  Unpacking sensors')
