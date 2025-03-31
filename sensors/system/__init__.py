@@ -1,16 +1,16 @@
-from core import Measurement, SensorBase, SensorDef, SettingsBase, Status, cast
 import psutil
-from typing import Any, Self
+from typing import Self
 
-from core.classes import Metric
+from core.classes import Measurement, Metric, SensorBase, SensorDef, SettingsBase, Status
+from core.config import ConfigDict
+from core.util import cast
 
 class CPUUsageSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
-        json = cast('settings', json, dict)
-        unhealthy = cast('unhealthy', json['unhealthy'], str)
-        degraded = cast('degraded', json['degraded'], str)
-        extra = cast('extra', json['extra'], bool)
+    def deserialize(cls, conf: ConfigDict) -> Self:
+        unhealthy = conf['unhealthy'].as_str()
+        degraded = conf['degraded'].as_str()
+        extra = conf['extra'].as_bool()
         return cls(unhealthy, degraded, extra)
     
     def __init__(self, unhealthy: str, degraded: str, extra: bool) -> None:
@@ -49,11 +49,10 @@ class CPUUSageSensor(SensorBase[CPUUsageSettings]):
 
 class RAMUsageSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
-        json = cast('settings', json, dict)
-        unhealthy = cast('unhealthy', json['unhealthy'], str)
-        degraded = cast('degraded', json['degraded'], str)
-        extra = cast('extra', json['extra'], bool)
+    def deserialize(cls, conf: ConfigDict) -> Self:
+        unhealthy = conf['unhealthy'].as_str()
+        degraded = conf['degraded'].as_str()
+        extra = conf['extra'].as_bool()
         return cls(unhealthy, degraded, extra)
 
     def __init__(self, unhealthy: str, degraded: str, extra: bool) -> None:
@@ -92,12 +91,11 @@ class RAMUsageSensor(SensorBase[RAMUsageSettings]):
 
 class DiskUsageSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
-        json = cast('settings', json, dict)
-        path = cast('path', json['path'], str)
-        unhealthy = cast('unhealthy', json['unhealthy'], str)
-        degraded = cast('degraded', json['degraded'], str)
-        extra = cast('extra', json['extra'], bool)
+    def deserialize(cls, conf: ConfigDict) -> Self:
+        path = cast('path', conf['path'], str)
+        unhealthy = conf['unhealthy'].as_str()
+        degraded = conf['degraded'].as_str()
+        extra = conf['extra'].as_bool()
         return cls(path, unhealthy, degraded, extra)
 
     def __init__(self, path: str, unhealthy: str, degraded: str, extra: bool) -> None:

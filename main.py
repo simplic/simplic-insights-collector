@@ -15,8 +15,9 @@ from uuid import UUID
 import psutil
 import requests
 
-from core import Measurement, SensorBase, SensorDef, Status, cast, parse_interval
-from core.util import eprint, format_time, get_ip_addr, jsonget
+from core.classes import Measurement, SensorBase, SensorDef, Status
+from core.config import ConfigDict, parse_config_file
+from core.util import cast, eprint, format_time, get_ip_addr, parse_interval
 
 @dataclass
 class HostConfig:
@@ -33,7 +34,7 @@ class SensorConfig:
     uuid: UUID
     type: str
     name: str
-    data: dict
+    data: ConfigDict
     secs: float
 
 def measure_loop(sensor: SensorBase, index: int, queue: Queue[tuple[int, Measurement]], secs: float, stop: Event):
@@ -146,18 +147,17 @@ def upload_loop(host: HostConfig, configs: list[SensorConfig], queue: Queue[tupl
 settings_file = sys.argv[1]
 debug = sys.argv[2] == 'debug'
 
-with open(settings_file, 'rt') as f:
-    settings = json.load(f)
+settings = parse_config_file(settings_file).as_dict()
 
 # Load config file
-uuid = UUID(jsonget(settings, 'uuid', str))
-url = jsonget(settings, 'url', str)
-name = jsonget(settings, 'name', str, default=platform.node())
-token = jsonget(settings, 'token', str)
-upload = jsonget(settings, 'upload', dict)
-min_upload_secs = parse_interval(jsonget(upload, 'min_interval', str))
-max_upload_secs = parse_interval(jsonget(upload, 'max_interval', str))
-max_backlog = jsonget(upload, 'max_backlog', int)
+uuid = UUID(settings['uuid'].as_str())
+url = settings['url'].as_str()
+name = settings['name'].as_str(platform.node())
+token = settings['token'].as_str()
+upload = settings['upload'].as_dict()
+min_upload_secs = parse_interval(upload['min_interval'].as_str())
+max_upload_secs = parse_interval(upload['max_interval'].as_str())
+max_backlog = upload['max_backlog'].as_int()
 
 host = HostConfig(uuid, name, url, token, min_upload_secs, max_upload_secs, max_backlog)
 
@@ -165,15 +165,15 @@ host = HostConfig(uuid, name, url, token, min_upload_secs, max_upload_secs, max_
 # Load sensor settings
 pkgs = set[str]()
 configs = list[SensorConfig]()
-for sensor in settings['sensors']:
-    uuid = UUID(jsonget(sensor, 'uuid', str))
-    type = jsonget(sensor, 'type', str)
-    name = jsonget(sensor, 'name', str)
-    data = jsonget(sensor, 'settings', dict)
+for sensor in settings['sensors'].as_list().iter_dict():
+    uuid = UUID(sensor['uuid'].as_str())
+    type = sensor['type'].as_str()
+    name = sensor['name'].as_str()
+    data = sensor['settings'].as_dict()
 
     pkg, id = type.split(':')
     pkgs.add(pkg)
-    secs = parse_interval(jsonget(sensor, 'interval', str))
+    secs = parse_interval(sensor['interval'].as_str())
     if secs < 0.05:
         raise ValueError('Interval must be >= 50ms')
 
@@ -183,7 +183,7 @@ for sensor in settings['sensors']:
 sensors = dict[str, SensorDef]()
 for pkg in pkgs:
     print('Loading package', pkg)
-    mod = importlib.import_module('sensors.' + pkg)
+    mod = importlib.import_module(f'packages.{pkg}.sensors')
     mod_sensors = cast('SENSORS', mod.SENSORS, list)
     for sensor in mod_sensors:
         sensor = cast('SENSORS[i]', sensor, SensorDef)

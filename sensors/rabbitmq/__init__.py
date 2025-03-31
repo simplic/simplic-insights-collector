@@ -1,20 +1,22 @@
-from core import Measurement, SensorBase, SensorDef, SettingsBase, Status, cast, jsonget
+from core import Measurement, SensorBase, SensorDef, SettingsBase, Status
 import pika
 import pika.exceptions
-from typing import Any, Self
+from typing import Self
+
+from core.config import ConfigValue
 
 class RabbitMQSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
-        json = cast('settings', json, dict)
-        host = jsonget(json, 'host', str)
-        port = jsonget(json, 'port', int, 5672)
-        vhost = jsonget(json, 'vhost', str, '/')
+    def deserialize(cls, conf: ConfigValue) -> Self:
+        json = conf.as_dict()
+        host = json['host'].as_str()
+        port = json['port'].as_int(5672)
+        vhost = json['vhost'].as_str('/')
         
-        credentials = jsonget(json, 'credentials', dict, None)
+        credentials = json['credentials'].as_dict(None)
         if credentials is not None:
-            username = jsonget(credentials, 'username', str)
-            password = jsonget(credentials, 'password', str)
+            username = credentials['username'].as_str()
+            password = credentials['password'].as_str()
             return cls(host, port, vhost, username, password)
         return cls(host, port, vhost)
     

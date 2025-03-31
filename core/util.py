@@ -11,11 +11,6 @@ def cast(name: str, value: Any, to: type[_T]) -> _T:
         return value
     raise TypeError(f'expected {name} to be a {to.__name__}')
 
-def jsonget(json: dict[str, Any], key: str, to: type[_T], default: _T | EllipsisType = ...) -> _T:
-    if default is not ... and key not in json:
-        return default
-    return cast(key, json[key], to)
-
 def parse_interval(interval: str) -> float:
     h, m, s, ms = None, None, None, None
     if 'h' in interval:

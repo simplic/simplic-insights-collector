@@ -1,18 +1,17 @@
-from core import Measurement, SensorBase, SensorDef, SettingsBase, Status, cast, jsonget
 from datetime import datetime, timezone
 import os
-from typing import Any, Self
+from typing import Self
 
-from core.classes import Metric
+from core.classes import Measurement, Metric, SensorBase, SensorDef, SettingsBase, Status
+from core.config import ConfigDict, ConfigValue
 from core.util import format_time
 
 class ExistsSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
-        json = cast('settings', json, dict)
-        path = jsonget(json, 'path', str)
-        file = jsonget(json, 'file', bool, default=False)
-        dir = jsonget(json, 'dir', bool, default=False)
+    def deserialize(cls, conf: ConfigDict) -> Self:
+        path = conf['path'].as_str()
+        file = conf['file'].as_bool(False)
+        dir = conf['dir'].as_bool(False)
         return cls(path, file, dir)
 
     def __init__(self, path: str, file: bool, dir: bool) -> None:
@@ -46,11 +45,10 @@ class ExistsSensor(SensorBase[ExistsSettings]):
 
 class AgeSettings(SettingsBase):
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
-        json = cast('settings', json, dict)
-        path = jsonget(json, 'path', str)
-        unhealthy = datetime.fromisoformat(jsonget(json, 'unhealthy', str))
-        degraded = datetime.fromisoformat(jsonget(json, 'degraded', str))
+    def deserialize(cls, conf: ConfigDict) -> Self:
+        path = conf['path'].as_str()
+        unhealthy = datetime.fromisoformat(conf['unhealthy'].as_str())
+        degraded = datetime.fromisoformat(conf['degraded'].as_str())
 
         return cls(path, unhealthy, degraded)
 

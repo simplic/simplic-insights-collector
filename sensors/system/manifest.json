@@ -1,5 +1,4 @@
 {
-    "$schema": "../../schemas/manifest.schema.json",
     "pkg": "system",
     "version": "0.1.0",
     "name": "System",

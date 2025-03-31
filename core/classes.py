@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any, Generic, Self, TypeVar
 
 from core.util import format_time
+from core.config import ConfigDict
 
 """
 A version (major.minor.patch+extra)
@@ -40,6 +41,9 @@ class Metric:
     name: str
     unit: str
     value: Any
+    """
+    Note: must be serializable as JSON
+    """
 
     def toJSON(self) -> dict[str, Any]:
         return {
@@ -64,7 +68,7 @@ class Measurement:
         return {
             'time': format_time(self.time),
             'status': self.status.value,
-            'metrics': self.metrics,
+            'metrics': [metric.toJSON() for metric in self.metrics],
             'error': {
                 'message': self.error,
                 'trace': self.trace,
@@ -74,6 +78,7 @@ class Measurement:
 class SettingsBase:
     """
     The base class for all sensor settings
+    These will be read from settings.json
     """
 
     @classmethod
@@ -87,7 +92,7 @@ class SettingsBase:
         return {}
 
     @classmethod
-    def deserialize(cls, json: Any) -> Self:
+    def deserialize(cls, conf: ConfigDict) -> Self:
         """
         Load settings from the config file
 
@@ -97,13 +102,13 @@ class SettingsBase:
         """
         return cls()
 
-    def serialize(self) -> Any:
+    def serialize(self) -> dict[str, Any]:
         """
         Serialize settings to json
 
         :returns: JSON value
         """
-        return None
+        return {}
 
 _Settings = TypeVar('_Settings', bound=SettingsBase)
 class SensorBase(ABC, Generic[_Settings]):
