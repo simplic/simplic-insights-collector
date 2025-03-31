@@ -1,9 +1,0 @@
-{
-    "pkg": "rabbitmq",
-    "version": "0.1.0",
-    "name": "RabbitMQ",
-    "description": "Detect if a RabbitMQ server is available",
-    "dependencies": [
-        "pika==1.3.*"
-    ]
-}

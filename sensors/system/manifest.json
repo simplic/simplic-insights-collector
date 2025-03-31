@@ -1,9 +1,0 @@
-{
-    "pkg": "system",
-    "version": "0.1.0",
-    "name": "System",
-    "description": "Various system-related sensors (cpu, ram, ...)",
-    "dependencies": [
-        "psutil==6.1.*"
-    ]
-}
