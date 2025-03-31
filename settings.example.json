@@ -9,6 +9,14 @@
         "max_interval": "5m",
         "max_backlog": 50
     },
+    "packages": [
+        {
+            "type": "github",
+            "pkg": "example",
+            "repo": "simplic/simplic-insights-package-system",
+            "version": "latest"
+        }
+    ],
     "sensors": [
         {
             "uuid": "01234567-89ab-cdef-0123-456789abcdef",

@@ -15,8 +15,10 @@ Simplic insights host/collector
 
 ## Creating a sensor package
 
+[Example package](https://github.com/simplic/simplic-insights-package-example)
+
 1. Give your package a unique id
-2. Create a new folder `sensors/<id>/`
+2. Create a new folder somewhere
 3. Create `__init__.py` and `manifest.json`
 4. Add id, version, name, description and dependencies to `manifest.json`
 5. For each sensor:
@@ -29,6 +31,17 @@ Simplic insights host/collector
     ]
     ```
 
+## Use the sensor package
+If you want to test the package before publishing to GitHub, you can use it locally by adding this to your `settings.json`
+```json
+"packages": [
+    {
+        "type": "folder",
+        "path": "/path/to/folder"
+    }
+]
+```
+And set the path to the folder containing `settings.json` and `sensors/`
 
 
 ## Structure
@@ -58,16 +71,6 @@ Simplic insights host/collector
 `core/`  
 Core library used by sensors
 
-`sensors/`  
-Built-in sensors
-
-`sensors/<pkg>/manifest.json`  
-Used by the loader to install dependencies  
-Can be used later for an online index of sensors
-
-`sensors/<pkg>/__init__.py`  
-Entry point for a sensor package
-
 `schemas/`  
 JSON schemas for the configuration files
 
@@ -75,49 +78,37 @@ JSON schemas for the configuration files
 
 ## Sensors
 
-The following section contains the available sensor types
+Links to sensor packages
+
+### Package `example`
+Example sensor package  
+https://github.com/simplic/simplic-insights-package-example
 
 ### Package `system`
-- CPU usage  
-  - Get CPU usage
-- RAM usage
-  - Get RAM and Swap usage
-- Disk usage
-  - Get total and available disk usage
-
-### Package `file`
-- Path exists
-  - Check if a file or directory exists
-- Path Age
-  - Check if a file or directory was modified recently 
+Various system-related sensors (cpu, ram, ...)  
+https://github.com/simplic/simplic-insights-package-example
 
 ### Package `rabbitmq`
+Detect if a RabbitMQ server is available  
+https://github.com/simplic/simplic-insights-package-example
 
-Checks whether a RabbitMQ server is available and accepts connections
+
+### Not implemented yet:
 
 ### Redis
-
 Checks whether a Redis server is available and accepts connections
 
 ### Sybase
-
 Checks whether a sybase sql anywhere server is available and accepts connections
 
 ### MSSQL
-
 Checks whether a mssql server is available and accepts connections
 
 ### Service is running
-
 Checks whether a given service is running
 
 ### Process
-
 Checks whether a process is running
 
 ### Http
-
 Checks whether an http(s) endpoint is available, by sending a HEAD-Request
-
-
-
